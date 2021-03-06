@@ -19,7 +19,7 @@ int relay1 = 5;
 int relay2 = 4;
 //pins that read encoders 
 int ENpinR0 = A0;
-int ENpinR1 = A1;
+int ENpinR1;
 int ENpinR2 = A2;
 int ENpinL3 = A3;
 int ENpinL4 = A6;
@@ -41,24 +41,34 @@ int Accel_Z = 0;
 int Gyro_X = 0;
 int Gyro_Y = 0;
 int Gyro_Z = 0; 
+//POT PIN
+int POT_PIN = A1;
 //variable for POT
 int POT_VAL;
 //variable for accel angle
 float accANGLE;
 //variable for gyro angle 
 float gyroANGLE;
+//current angler holder 
+float currentANGLE = 0; 
+//previous angle holder 
+float previousANGLE = 0; 
 //variable for gyro rate 
 int16_t gyroRate;
 //variables for time 
-unsigned long currentTIME, previousTIME = 0, loopTIME;
+unsigned long currentTIME, previousTIME = 0, loopTIME, sampleTIME = 0.005;
 //variable to hold each iterative calculated error
 float error = 0;
 //variable to hold sum of error 
 float errorSUM = 0;
 //variable to hold the target angle 
-float targetANGLE = 0;
+float targetANGLE = 1;
 //variable to hold current motor power needed 
 float motorPOWER = 0;
+//PID variables 
+float Kp = 40;
+float Ki = 40; 
+float Kd = 0.05; 
 
 //SETUP=====================================================================
 void setup() {
@@ -78,8 +88,8 @@ void setup() {
     pinMode(ENpinL4, INPUT);
     pinMode(ENpinL5, INPUT);
 
-    pinMode(POT_VAL, INPUT); 
-
+ 
+    pinMode(POT_PIN, INPUT);
     //initialize MPU6050
     Wire.begin();
     Wire.beginTransmission(MPU);
@@ -93,6 +103,7 @@ void setup() {
 
 //LOOP=======================================================================
 void loop() {
+
 
   //set time to miliseconds
   currentTIME = millis();
@@ -154,7 +165,8 @@ void loop() {
   accANGLE =abs( atan2(Accel_Y, Accel_Z)*RAD_TO_DEG );
     if(isnan(accANGLE));
     else{
-    Serial.println(accANGLE);
+      Serial.println("accANGLE");
+      Serial.println(accANGLE);
   }
   
   //calculate gyro rate 
@@ -162,34 +174,53 @@ void loop() {
   
   //calculate gyro angle 
   gyroANGLE = abs( gyroANGLE + (float)gyroRate*loopTIME/1000);
+  Serial.println("gyroANGLE");
   Serial.println(gyroANGLE);
   Serial.println("\n\n\n\n\n");
 
   //calculate current angle 
   currentANGLE = 0.9934*(previousANGLE + gyroANGLE) + 0.0066*(accANGLE);
-
+  Serial.println("CURRENT ANGLE");
+  Serial.println(currentANGLE);
+  
   //calculate amount of error 
   error = currentANGLE - targetANGLE;
+  Serial.println("ERROR");
+  Serial.println(error);
+  
   errorSUM = errorSUM + error;
+  Serial.println("errorSUM & errorSUM CONSTRAINED");
+  Serial.println(errorSUM);
   //not sure what this constraint function does 
   errorSUM = constrain(errorSUM, -300,300);
+  Serial.println(errorSUM);
+   
+  //use PID values to calculate how much power to send to the motors 
+  motorPOWER = Kp*(error) + Ki*(errorSUM)*sampleTIME - Kd*(currentANGLE - previousANGLE)/sampleTIME;
+  Serial.println("MOTOR POWER");
+  Serial.println(motorPOWER);
+  
+
+
+
+
 
 //THIS WILL BE REPLACED WITH MOTOR CONTROL FUNCTIONS SO THAT====================
 //THE RELAYS AND MOTOR SIGNAL RAMP UP/RAMP DOWN CANNOT BE MIS TIMED============= 
 
   //if tips past balance point relays must be switched
   //to change the direction of the wheels 
-  if(accANGLE >= -136.5){
+  if(accANGLE <= 136.5){
     digitalWrite(relay1, HIGH);
     digitalWrite(relay2, LOW);
     delay(10);
   }
-  else if(accANGLE <= -138.5){
+  else if(accANGLE >= 138.5){
     digitalWrite(relay1, LOW);
     digitalWrite(relay2, HIGH);  
     delay(10);
   }
-  else if(accANGLE > -138.5 and accANGLE < -136.5){
+  else if(accANGLE < 138.5 and accANGLE >136.5){
    
     Serial.println("\n\n\n================BALANCED===============\n\n\n");  
   } 
