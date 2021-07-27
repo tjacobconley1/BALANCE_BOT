@@ -3,15 +3,26 @@
 Parts List: 
 
 -2 Hoverboard Hub Motors 
--A 36v-42v Battery made of those small lithium cells 
+-20 18650 3.6v cells  
 -an arduino nano 
 -MPU6050 gyro/accelerometer module
--custom designed chassis (I will also upload my files from Fusion360) 
--some threaded rods 
+-housing for baterry/hardware with weight offset at around 45degrees
+-a normal open toggle switch to kill the wheels if the cover is off
+-36v 16amp 10s PCB Lithium battery protection board
+-Jetson Nano Dev board
+-Odrive3.6 56v Motor Controller 
 
 
+    This project was created as an effort to gain 
+     Understanding of gyroscopic stabilization
 
-I still need to make a wiring diagram and probably a few more mounting pieces for the hardware. 
+     This project also has become an effort to
+     understand how feedback control loops operate.
 
-The plan is to learn how gyroscopic balancing works thoroughly and then slap this sweet Jetson Chip with a 128core GPU I ordered
-on top to do some machine learning and maybe even turn it into a robot that automatically takes your trash cans to the road or something
+    Minor adjustments in wheel acceleration must be
+    made in order to counter act the bot falling in
+    either one direction or the other
+
+    A PID Loop will used to determine wheel rotation
+
+
